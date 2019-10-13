@@ -1,25 +1,46 @@
-import requests
-from flask import Flask, render_template, request, Response
+from typing import List, Dict
+from flask import Flask, redirect,url_for, request
+import mysql.connector
+import json
+
 app = Flask(__name__)
 
-class ESB():
-    def __init__(self, Nombre):
-        self.Nombre = Nombre
+@app.route('/')
+def index():
+    config = {
+        'user': 'root',
+        'password': 'root',
+        'host': 'db',
+        'port': '3306',
+        'database': 'testdb'
+    }
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor(buffered=True)
+    cursor.execute('SELECT * FROM Clientes')
+    resultado = str(cursor.fetchall())
+    cursor.close()
+    connection.close()
+    return resultado
 
 
-@app.route('/', methods=['GET','POST'])
-def llamar_delete_complemento():
-	Nombre = ""
-	Correo = ""
-	if request.method == 'POST':
-		Nombre = request.form.get('nombre')
-		Correo = request.form.get('correo')
-		return 'Hola ' + Nombre
-	return  '''<form method="POST">'''\
-			'''Nombre: <input type="text" name="nombre"><br>'''\
-			'''Correo: <input type="text" name="correo"><br>'''\
-			'''<input type="submit" value="Submit"><br>'''\
-			'''</form>'''
+@app.route('/nuevoCliente')
+def nuevoCliente():
+    print(request)
+    nombre = request.args['nombre']
+    email = request.args['correo']
+    config = {
+        'user': 'root',
+        'password': 'root',
+        'host': 'db',
+        'port': '3306',
+        'database': 'testdb'
+    }
+    connection = mysql.connector.connect(**config)
+    cursor = connection.cursor(buffered=True)
+    cursor.execute('INSERT INTO Clientes (nombre, email) VALUES (\''+nombre+'\', \''+email+'\')')
+    connection.commit()
+    connection.close()
+    return "Guardado Nombre ["+nombre+"] correo ["+email+"]"
 
-if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port="80")
